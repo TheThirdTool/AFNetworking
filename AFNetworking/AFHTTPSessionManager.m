@@ -46,26 +46,27 @@
 
 @implementation AFHTTPSessionManager
 @dynamic responseSerializer;
-
+//类方法，返回一个新创建的AFHTTPSessionManager对象
 + (instancetype)manager {
     return [[[self class] alloc] initWithBaseURL:nil];
 }
-
+//构造函数
 - (instancetype)init {
     return [self initWithBaseURL:nil];
 }
-
+//构造函数
 - (instancetype)initWithBaseURL:(NSURL *)url {
     return [self initWithBaseURL:url sessionConfiguration:nil];
 }
-
+//构造函数
 - (instancetype)initWithSessionConfiguration:(NSURLSessionConfiguration *)configuration {
     return [self initWithBaseURL:nil sessionConfiguration:configuration];
 }
-
+//构造函数
 - (instancetype)initWithBaseURL:(NSURL *)url
            sessionConfiguration:(NSURLSessionConfiguration *)configuration
 {
+    //调用父类的构造函数
     self = [super initWithSessionConfiguration:configuration];
     if (!self) {
         return nil;
@@ -77,7 +78,7 @@
     }
 
     self.baseURL = url;
-
+    //获取单例的请求序列化和响应序列化器
     self.requestSerializer = [AFHTTPRequestSerializer serializer];
     self.responseSerializer = [AFJSONResponseSerializer serializer];
 
@@ -99,7 +100,7 @@
 }
 
 @dynamic securityPolicy;
-
+//setter设置安全策略
 - (void)setSecurityPolicy:(AFSecurityPolicy *)securityPolicy {
     if (securityPolicy.SSLPinningMode != AFSSLPinningModeNone && ![self.baseURL.scheme isEqualToString:@"https"]) {
         NSString *pinningMode = @"Unknown Pinning Mode";
@@ -116,7 +117,7 @@
 }
 
 #pragma mark -
-
+//GET请求，调用下面那个方法
 - (NSURLSessionDataTask *)GET:(NSString *)URLString
                    parameters:(id)parameters
                       success:(void (^)(NSURLSessionDataTask *task, id responseObject))success
@@ -125,7 +126,7 @@
 
     return [self GET:URLString parameters:parameters headers:nil progress:nil success:success failure:failure];
 }
-
+//GET请求
 - (NSURLSessionDataTask *)GET:(NSString *)URLString
                    parameters:(id)parameters
                      progress:(void (^)(NSProgress * _Nonnull))downloadProgress
@@ -143,7 +144,7 @@
                       success:(void (^)(NSURLSessionDataTask * _Nonnull, id _Nullable))success
                       failure:(void (^)(NSURLSessionDataTask * _Nullable, NSError * _Nonnull))failure
 {
-    
+    //调用另一个方法构造GET请求
     NSURLSessionDataTask *dataTask = [self dataTaskWithHTTPMethod:@"GET"
                                                         URLString:URLString
                                                        parameters:parameters
@@ -152,12 +153,16 @@
                                                  downloadProgress:downloadProgress
                                                           success:success
                                                           failure:failure];
-    
+    /*
+     启动任务
+     使用AFHTTPSessionManager创建的任务默认都帮你启动了，所以不需要手动调用resume方法了
+     上一篇中讲解的AFURLSessionManager默认没有启动，所以获取任务后要手动启动
+     */
     [dataTask resume];
     
     return dataTask;
 }
-
+//获取HEAD请求
 - (NSURLSessionDataTask *)HEAD:(NSString *)URLString
                     parameters:(id)parameters
                        success:(void (^)(NSURLSessionDataTask *task))success
@@ -172,22 +177,23 @@
                        success:(void (^)(NSURLSessionDataTask * _Nonnull))success
                        failure:(void (^)(NSURLSessionDataTask * _Nullable, NSError * _Nonnull))failure
 {
+     //同样调用下面的一个方法来获取
     NSURLSessionDataTask *dataTask = [self dataTaskWithHTTPMethod:@"HEAD" URLString:URLString parameters:parameters headers:headers uploadProgress:nil downloadProgress:nil success:^(NSURLSessionDataTask *task, __unused id responseObject) {
         if (success) {
             success(task);
         }
     } failure:failure];
-    
+    //默认启动任务
     [dataTask resume];
     
     return dataTask;
 }
-
+//获取POST请求
 - (NSURLSessionDataTask *)POST:(NSString *)URLString
                     parameters:(id)parameters
                        success:(void (^)(NSURLSessionDataTask *task, id responseObject))success
                        failure:(void (^)(NSURLSessionDataTask *task, NSError *error))failure
-{
+{           ////调用下面的方法获取
     return [self POST:URLString parameters:parameters headers:nil progress:nil success:success failure:failure];
 }
 
@@ -199,7 +205,7 @@
 {
     return [self POST:URLString parameters:parameters headers:nil progress:uploadProgress success:success failure:failure];
 }
-
+//获取POST请求
 - (nullable NSURLSessionDataTask *)POST:(NSString *)URLString
                              parameters:(nullable id)parameters
                                 headers:(nullable NSDictionary <NSString *, NSString *> *)headers
@@ -207,8 +213,9 @@
                                 success:(nullable void (^)(NSURLSessionDataTask *task, id _Nullable responseObject))success
                                 failure:(nullable void (^)(NSURLSessionDataTask * _Nullable task, NSError *error))failure
 {
+    //同GET HEAD方法一样，调用一个方法获取任务
     NSURLSessionDataTask *dataTask = [self dataTaskWithHTTPMethod:@"POST" URLString:URLString parameters:parameters headers:headers uploadProgress:uploadProgress downloadProgress:nil success:success failure:failure];
-    
+    //默认启动任务
     [dataTask resume];
     
     return dataTask;
@@ -222,17 +229,17 @@
 {
     return [self POST:URLString parameters:parameters headers:nil constructingBodyWithBlock:block progress:nil success:success failure:failure];
 }
-
+//获取POST上传文件请求
 - (NSURLSessionDataTask *)POST:(NSString *)URLString
                     parameters:(id)parameters
      constructingBodyWithBlock:(void (^)(id <AFMultipartFormData> formData))block
                       progress:(nullable void (^)(NSProgress * _Nonnull))uploadProgress
                        success:(void (^)(NSURLSessionDataTask *task, id responseObject))success
                        failure:(void (^)(NSURLSessionDataTask *task, NSError *error))failure
-{
+{           ////调用下面的方法来构造上传文件的POST请求
     return [self POST:URLString parameters:parameters headers:nil constructingBodyWithBlock:block progress:uploadProgress success:success failure:failure];
 }
-
+//上传文件POST请求
 - (NSURLSessionDataTask *)POST:(NSString *)URLString
                     parameters:(id)parameters
                        headers:(NSDictionary<NSString *,NSString *> *)headers
@@ -240,11 +247,13 @@
                       progress:(void (^)(NSProgress * _Nonnull))uploadProgress
                        success:(void (^)(NSURLSessionDataTask * _Nonnull, id _Nullable))success failure:(void (^)(NSURLSessionDataTask * _Nullable, NSError * _Nonnull))failure
 {
+    //构造一个request请求
     NSError *serializationError = nil;
     NSMutableURLRequest *request = [self.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:[[NSURL URLWithString:URLString relativeToURL:self.baseURL] absoluteString] parameters:parameters constructingBodyWithBlock:block error:&serializationError];
     for (NSString *headerField in headers.keyEnumerator) {
         [request addValue:headers[headerField] forHTTPHeaderField:headerField];
     }
+    //如果在做序列化时出错在主线程调用failure回调块
     if (serializationError) {
         if (failure) {
             dispatch_async(self.completionQueue ?: dispatch_get_main_queue(), ^{
@@ -254,7 +263,7 @@
         
         return nil;
     }
-    
+    //调用父类的方法获取一个上传的任务
     __block NSURLSessionDataTask *task = [self uploadTaskWithStreamedRequest:request progress:uploadProgress completionHandler:^(NSURLResponse * __unused response, id responseObject, NSError *error) {
         if (error) {
             if (failure) {
@@ -266,12 +275,12 @@
             }
         }
     }];
-    
+    //默认启动任务
     [task resume];
     
     return task;
 }
-
+//获取PUT请求
 - (NSURLSessionDataTask *)PUT:(NSString *)URLString
                    parameters:(id)parameters
                       success:(void (^)(NSURLSessionDataTask *task, id responseObject))success
@@ -286,8 +295,9 @@
                       success:(void (^)(NSURLSessionDataTask *task, id responseObject))success
                       failure:(void (^)(NSURLSessionDataTask *task, NSError *error))failure
 {
+    //通过一个通用的方法来获取dataTask
     NSURLSessionDataTask *dataTask = [self dataTaskWithHTTPMethod:@"PUT" URLString:URLString parameters:parameters headers:headers uploadProgress:nil downloadProgress:nil success:success failure:failure];
-    
+    //默认启动任务
     [dataTask resume];
     
     return dataTask;
@@ -334,7 +344,7 @@
     
     return dataTask;
 }
-
+//一个通用的方法来构造NSURLSessionDataTask
 - (NSURLSessionDataTask *)dataTaskWithHTTPMethod:(NSString *)method
                                        URLString:(NSString *)URLString
                                       parameters:(id)parameters
@@ -344,11 +354,14 @@
                                          success:(void (^)(NSURLSessionDataTask *, id))success
                                          failure:(void (^)(NSURLSessionDataTask *, NSError *))failure
 {
+    //通过请求序列化器构造一个request请求
+    //需要传入请求方法GET POST DELETE PUT这样的字符串 以及相关参数
     NSError *serializationError = nil;
     NSMutableURLRequest *request = [self.requestSerializer requestWithMethod:method URLString:[[NSURL URLWithString:URLString relativeToURL:self.baseURL] absoluteString] parameters:parameters error:&serializationError];
     for (NSString *headerField in headers.keyEnumerator) {
         [request addValue:headers[headerField] forHTTPHeaderField:headerField];
     }
+    //如果序列化失败在主线程中执行failure回调块
     if (serializationError) {
         if (failure) {
             dispatch_async(self.completionQueue ?: dispatch_get_main_queue(), ^{
@@ -358,7 +371,7 @@
 
         return nil;
     }
-
+    //序列化成功，调用父类的方法获取dataTask
     __block NSURLSessionDataTask *dataTask = nil;
     dataTask = [self dataTaskWithRequest:request
                           uploadProgress:uploadProgress
@@ -374,7 +387,7 @@
             }
         }
     }];
-
+    //返回dataTask
     return dataTask;
 }
 
@@ -443,5 +456,10 @@
     HTTPClient.securityPolicy = [self.securityPolicy copyWithZone:zone];
     return HTTPClient;
 }
+
+/*
+ AFHTTPSessionManager继承自AFURLSessionManager并提供了更加便捷的网络请求接口，如果阅读了前一篇AFURLSessionManager可以发现它才是重点。AFHTTPSessionManager只是在它的基础上做了一些简单的封装，提供了更加便捷的接口。
+ 通过AFURLSessionManager和AFHTTPSessionManager源码的阅读可以学习到AFNetworking在代码设计方面的优点，以及对NSURLSession的使用更清晰了。
+ */
 
 @end

@@ -69,14 +69,17 @@
  Also important to note is that a trailing slash will be added to any `baseURL` without one. This would otherwise cause unexpected behavior when constructing URLs using paths without a leading slash.
 
  @warning Managers for background sessions must be owned for the duration of their use. This can be accomplished by creating an application-wide or shared singleton instance.
+ 
+ 前一篇文章我们讲解了AFURLSessionManager的源码，最后还给了一个只使用AFURLSessionManager来创建NSURLSessionDataTask和NSURLSessionDownloadTask的栗子，但是发现创建下载任务真的很简单了，只需要传入要下载文件的NSURL对象，在传入几个回调块就能将文件下载到指定的目录中，并且可以监控下载进度，真的很方便，但NSURLSessionDataTask创建的任务默认是GET请求，如果需要其他如POST请求还需要修改request就显得有些麻烦了，今天要介绍的AFHTTPSessionManager就是继承自AFURLSessionManager，通过名称就知道这个类为HTTP访问提供了更加便捷的方法。
  */
 
 NS_ASSUME_NONNULL_BEGIN
-
+//继承自AFURLSessionManager类
 @interface AFHTTPSessionManager : AFURLSessionManager <NSSecureCoding, NSCopying>
 
 /**
  The URL used to construct requests from relative paths in methods like `requestWithMethod:URLString:parameters:`, and the `GET` / `POST` / et al. convenience methods.
+ //网络请求要访问的URL
  */
 @property (readonly, nonatomic, strong, nullable) NSURL *baseURL;
 
@@ -84,6 +87,7 @@ NS_ASSUME_NONNULL_BEGIN
  Requests created with `requestWithMethod:URLString:parameters:` & `multipartFormRequestWithMethod:URLString:parameters:constructingBodyWithBlock:` are constructed with a set of default headers using a parameter serialization specified by this property. By default, this is set to an instance of `AFHTTPRequestSerializer`, which serializes query string parameters for `GET`, `HEAD`, and `DELETE` requests, or otherwise URL-form-encodes HTTP message bodies.
 
  @warning `requestSerializer` must not be `nil`.
+ //请求序列化
  */
 @property (nonatomic, strong) AFHTTPRequestSerializer <AFURLRequestSerialization> * requestSerializer;
 
@@ -91,6 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
  Responses sent from the server in data tasks created with `dataTaskWithRequest:success:failure:` and run using the `GET` / `POST` / et al. convenience methods are automatically validated and serialized by the response serializer. By default, this property is set to an instance of `AFJSONResponseSerializer`.
 
  @warning `responseSerializer` must not be `nil`.
+ //响应序列化
  */
 @property (nonatomic, strong) AFHTTPResponseSerializer <AFURLResponseSerialization> * responseSerializer;
 
@@ -100,6 +105,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  The security policy used by created session to evaluate server trust for secure connections. `AFURLSessionManager` uses the `defaultPolicy` unless otherwise specified. A security policy configured with `AFSSLPinningModePublicKey` or `AFSSLPinningModeCertificate` can only be applied on a session manager initialized with a secure base URL (i.e. https). Applying a security policy with pinning enabled on an insecure session manager throws an `Invalid Security Policy` exception.
+ //安全策略
  */
 @property (nonatomic, strong) AFSecurityPolicy *securityPolicy;
 
@@ -109,6 +115,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Creates and returns an `AFHTTPSessionManager` object.
+ //类方法返回一个AFHTTPSessionManager对象，不是单例，每次调用都重新创建
  */
 + (instancetype)manager;
 
@@ -117,7 +124,7 @@ NS_ASSUME_NONNULL_BEGIN
 
  @param url The base URL for the HTTP client.
 
- @return The newly-initialized HTTP client
+ @return The newly-initialized HTTP client//构造函数
  */
 - (instancetype)initWithBaseURL:(nullable NSURL *)url;
 
@@ -129,7 +136,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param url The base URL for the HTTP client.
  @param configuration The configuration used to create the managed session.
 
- @return The newly-initialized HTTP client
+ @return The newly-initialized HTTP client//构造函数
  */
 - (instancetype)initWithBaseURL:(nullable NSURL *)url
            sessionConfiguration:(nullable NSURLSessionConfiguration *)configuration NS_DESIGNATED_INITIALIZER;
@@ -147,6 +154,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:completionHandler:
+ //获取一个GET请求
  */
 - (nullable NSURLSessionDataTask *)GET:(NSString *)URLString
                    parameters:(nullable id)parameters
@@ -164,6 +172,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:uploadProgress:downloadProgress:completionHandler:
+ //获取一个GET请求
  */
 - (nullable NSURLSessionDataTask *)GET:(NSString *)URLString
                             parameters:(nullable id)parameters
@@ -182,6 +191,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
  
  @see -dataTaskWithRequest:uploadProgress:downloadProgress:completionHandler:
+
  */
 - (nullable NSURLSessionDataTask *)GET:(NSString *)URLString
                             parameters:(nullable id)parameters
@@ -199,6 +209,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:completionHandler:
+  //获取一个HEAD请求
  */
 - (nullable NSURLSessionDataTask *)HEAD:(NSString *)URLString
                     parameters:(nullable id)parameters
@@ -215,6 +226,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
  
  @see -dataTaskWithRequest:completionHandler:
+  //获取一个HEAD请求
  */
 - (nullable NSURLSessionDataTask *)HEAD:(NSString *)URLString
                              parameters:(nullable id)parameters
@@ -231,6 +243,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:completionHandler:
+ //获取一个POST请求
  */
 - (nullable NSURLSessionDataTask *)POST:(NSString *)URLString
                     parameters:(nullable id)parameters
@@ -247,6 +260,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:uploadProgress:downloadProgress:completionHandler:
+ //获取一个POST请求
  */
 - (nullable NSURLSessionDataTask *)POST:(NSString *)URLString
                              parameters:(nullable id)parameters
@@ -265,6 +279,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
  
  @see -dataTaskWithRequest:uploadProgress:downloadProgress:completionHandler:
+ //获取一个POST请求
  */
 - (nullable NSURLSessionDataTask *)POST:(NSString *)URLString
                              parameters:(nullable id)parameters
@@ -283,6 +298,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:completionHandler:
+ //获取一个POST请求
  */
 - (nullable NSURLSessionDataTask *)POST:(NSString *)URLString
                     parameters:(nullable id)parameters
@@ -301,6 +317,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:uploadProgress:downloadProgress:completionHandler:
+ //获取一个POST请求
  */
 - (nullable NSURLSessionDataTask *)POST:(NSString *)URLString
                              parameters:(nullable id)parameters
@@ -320,6 +337,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
  
  @see -dataTaskWithRequest:uploadProgress:downloadProgress:completionHandler:
+ //获取一个POST请求
  */
 - (nullable NSURLSessionDataTask *)POST:(NSString *)URLString
                              parameters:(nullable id)parameters
@@ -338,6 +356,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:completionHandler:
+ //获取一个PUT请求
  */
 - (nullable NSURLSessionDataTask *)PUT:(NSString *)URLString
                    parameters:(nullable id)parameters
@@ -354,6 +373,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
  
  @see -dataTaskWithRequest:completionHandler:
+ //获取一个PUT请求
  */
 - (nullable NSURLSessionDataTask *)PUT:(NSString *)URLString
                             parameters:(nullable id)parameters
@@ -370,6 +390,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:completionHandler:
+ //获取一个PATCH请求
  */
 - (nullable NSURLSessionDataTask *)PATCH:(NSString *)URLString
                      parameters:(nullable id)parameters
@@ -386,6 +407,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
  
  @see -dataTaskWithRequest:completionHandler:
+ //获取一个PATCH请求
  */
 - (nullable NSURLSessionDataTask *)PATCH:(NSString *)URLString
                               parameters:(nullable id)parameters
@@ -402,6 +424,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
 
  @see -dataTaskWithRequest:completionHandler:
+ //获取一个DELETE请求
  */
 - (nullable NSURLSessionDataTask *)DELETE:(NSString *)URLString
                       parameters:(nullable id)parameters
@@ -418,6 +441,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param failure A block object to be executed when the task finishes unsuccessfully, or that finishes successfully, but encountered an error while parsing the response data. This block has no return value and takes a two arguments: the data task and the error describing the network or parsing error that occurred.
  
  @see -dataTaskWithRequest:completionHandler:
+ //获取一个DELETE请求
  */
 - (nullable NSURLSessionDataTask *)DELETE:(NSString *)URLString
                                parameters:(nullable id)parameters
@@ -426,5 +450,5 @@ NS_ASSUME_NONNULL_BEGIN
                                   failure:(nullable void (^)(NSURLSessionDataTask * _Nullable task, NSError *error))failure;
 
 @end
-
+//AFHTTPSessionManager提供了一系列的构造方法以及HTTP访问的方法
 NS_ASSUME_NONNULL_END
